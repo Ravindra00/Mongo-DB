@@ -1,10 +1,10 @@
-Remove MongoDB on CentOS Linux
+# Remove MongoDB on CentOS Linux
 
-1.Stop MongoDB
+# 1.Stop MongoDB
 
 [root@centosmn ~]# systemctl stop mongod
 
-2.Remove Packages.
+# 2.Remove Packages.
 
 [root@centosmn ~]#  yum erase $(rpm -qa | grep mongodb-org)
 
