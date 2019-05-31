@@ -12,3 +12,4 @@ Remove MongoDB on CentOS Linux
 
 [root@centosmn ~]# rm -rf /var/log/mongodb
 [root@centosmn ~]# rm -rf /var/lib/mongo
+
