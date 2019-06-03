@@ -15,12 +15,12 @@ To create user with admin privileges in your MongoDB server.
 > use admin
 
 > db.createUser(
-... ...      {
-... ...        user:"superadmin",
-... ...        pwd:"Admin@P@55w0rd",
-... ...        roles:[{role:"root",db:"admin"}]
-... ...      }
-... ... )
+             {
+               user:"superadmin",
+               pwd:"Admin@P@55w0rd",
+               roles:[{role:"root",db:"admin"}]
+              }
+        )
 /*
 Successfully added user: {
         "user" : "superadmin",
@@ -107,12 +107,12 @@ For example we are creating a user account with read write access on EightSquare
 # Create User User1
 
 > db.createUser(
-... ...      {
-... ...        user:"User1",
-... ...        pwd:"User1@P@55w0rd",
-... ...        roles:[{role:"readWrite",db:"EightSquare"}]
-... ...      }
-... ... )
+              {
+                user:"User1",
+                pwd:"User1@P@55w0rd",
+                roles:[{role:"readWrite",db:"EightSquare"}]
+              }
+         )
 
 
 > db.getUsers()
@@ -140,12 +140,12 @@ For example we are creating a user account with read write access on EightSquare
 # Create User User2
 
 > db.createUser(
-... ...      {
-... ...        user:"User2",
-... ...        pwd:"User2@P@55w0rd",
-... ...        roles:[{role:"readWrite",db:"EightSquare"}]
-... ...      }
-... ... )
+              {
+                user:"User2",
+                pwd:"User2@P@55w0rd",
+                roles:[{role:"readWrite",db:"EightSquare"}]
+              }
+         )
 
 
 
