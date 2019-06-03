@@ -6,11 +6,8 @@
 
 /*
 admin    0.000GB
-
 config   0.000GB
-
 local    0.000GB
-
 */
 
 # Choose admin Database to create Admin user.
