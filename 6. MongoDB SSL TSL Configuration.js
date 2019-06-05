@@ -154,6 +154,7 @@ net:
 
  
  /* To Connect Mongodb using Compass */
+-- Copy 3 files from VM to local server (server.crt, mongodb.crt, mongodb.key)
    
 Hostname                : localhost_ssl
 Port                    : 27017
