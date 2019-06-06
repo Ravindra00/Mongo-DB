@@ -1,12 +1,12 @@
 # Enable Authentication
 
-**To Enable Authentication, Need to change in the Mongo Config files. Before changing the config file need to stop MongoDB services.**
+*To Enable Authentication, Need to change in the Mongo Config files. Before changing the config file need to stop MongoDB services.*
 
 [root@centosmn ~]# systemctl stop mongod
 
 [root@centosmn ~]# vi /etc/mongod.conf
 
-*__Add on Config File (must have space after the colon in enabled (: enabled))__*
+Add on Config File (must have space after the colon in enabled (: enabled))
 
 /*
 
