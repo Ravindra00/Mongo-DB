@@ -18,78 +18,146 @@ Node3 : 192.168.19.133 sqlnode2
 
 Step 1 - Prepare the server
 
-Install MongoDB in all the Nodes (1. Install MongoDB in Linux)
-Install firewalld on all Nodes
-
 Edit the hosts file with vi.
-[root@centosmn ~]# vim /etc/hosts
-[root@sqlnode1 ~]# vim /etc/hosts
-[root@sqlnode2 ~]# vim /etc/hosts
+[root@centosmn ~]# vi /etc/hosts
+[root@sqlnode1 ~]# vi /etc/hosts
+[root@sqlnode2 ~]# vi /etc/hosts
 
+Paste hosts configuration below on all 3 nodes:
 
-yum -y install firewalld
+192.168.19.134 centosms
+192.168.19.132 sqlnode1
+192.168.19.133 sqlnode2
+ 
+ Save the file and exit.
+
+Next, We will disable SELinux by editing the configuration file with vi
+ 
+[root@centosmn ~]# vi /etc/sysconfig/selinux
+[root@sqlnode1 ~]# vi /etc/sysconfig/selinux
+[root@sqlnode2 ~]# vi /etc/sysconfig/selinux
+
+Change value 'enforcing' to 'disabled'.
+
+SELINUX=disabled
+
+Save and exit, then reboot the servers.
+
+[root@centosmn ~]# reboot
+[root@sqlnode1 ~]# reboot
+[root@sqlnode2 ~]# reboot
+ 
+ Check the SELinux status with the command.
+ 
+ 
+[root@centosmn ~]# getenforce
+[root@sqlnode1 ~]# getenforce
+[root@sqlnode2 ~]# getenforce
+ 
+Make sure you get 'Disabled' as the result
+
+Step 2 - Install MongoDB on All Nodes
+
+Note:
+If you want a complete tutorial about 'MongoDB Installation', you see this link below
+https://github.com/sumanpantha/Mongo-DB/blob/master/1.%20Install%20Mongo%20DB%20in%20Linux.js.
+
+Step 3 - Configure Firewalld
+
+In the first step, we already disabled SELinux. 
+For security reasons, we will now enable firewalld on all nodes and open only the ports that are used by MongoDB and SSH.
+
+Install Firewalld with the yum command.
+ 
+[root@centosmn ~]# yum -y install firewalld
+[root@sqlnode1 ~]# yum -y install firewalld
+[root@sqlnode2 ~]# yum -y install firewalld
+
+Start firewalld and enable it to start at boot time on all nodes.
 
 systemctl start firewalld
 systemctl enable firewalld
-
-
+ 
+ Next, open your ssh port and the MongoDB default port 27017 on all nodes.
+ 
 --Node1------------------------------------------------------
-
 [root@centosmn ~]# firewall-cmd --permanent --add-port=22/tcp
 success
-
 [root@centosmn ~]# firewall-cmd --permanent --add-port=27017/tcp
 success
-
 [root@centosmn ~]# firewall-cmd --reload
 success
 
 --Node2------------------------------------------------------
 [root@sqlnode1 ~]# firewall-cmd --permanent --add-port=22/tcp
 success
-
 [root@sqlnode1 ~]# firewall-cmd --permanent --add-port=27017/tcp
 success
-
 [root@sqlnode1 ~]# firewall-cmd --reload
 success
-
 
 --Node3------------------------------------------------------
 [root@sqlnode2 ~]# firewall-cmd --permanent --add-port=22/tcp
 success
-
 [root@sqlnode2 ~]# firewall-cmd --permanent --add-port=27017/tcp
 success
-
 [root@sqlnode2 ~]# firewall-cmd --reload
 success
+ 
+ 
+Step 4 - Configure MongoDB Replica Set
+/*
+A Replica Set is a group of mongod processes in MongoDB that maintain same data and information. 
+The Replica Set provides high-availability and fault tolerance for production deployments of the database.
 
+Replication in mongodb is composed of several MongoDB server instances running mongod process, 
+only one instance runs as 'PRIMARY', all other instances are 'SECONDARY'. 
+Data is written only on the 'PRIMARY' instance, the data sets are then replicated to all 'SECONDARY' instances.
 
-
+In this step, we will prepare all server nodes to implement the replica sets in MongoDB.
+*/
+Edit the MongoDB configuration file mongod.conf file with vi on all nodes.
 
 vim /etc/mongod.conf
 
-
-
+Change the bindIP to 0.0.0.0 so all the IP can access.
 net:
   port: 27017
    bindIP: 0.0.0.0
-  
-  
+
+Next, uncomment replication , and set the replication name to 'MongoDBRep'
+
 replication:
-  replSetName: "MongoDBRep"  
+  replSetName: "MongoDBRep" 
 
+Save th file and exit vi
 
+Restart MongoDB on all nodes.
 
+[root@centosmn ~]# systemctl restart mongod
+[root@sqlnode1 ~]# systemctl restart mongod
+[root@sqlnode2 ~]# systemctl restart mongod
+ 
+ 
+ Now check mongodb and makesure it's running on the server ipadress, not localhost ipaddress.
+ 
+[root@centosmn ~]# netstat -plntu
+[root@sqlnode1 ~]# netstat -plntu
+[root@sqlnode2 ~]# netstat -plntu
 
+Step 5 - MongoDB Replica Set initiate
 
+In this step, we will create the replica set. 
+We will use the 'centosmn' server as 'PRIMARY' node, and 'sqlnode1' and 'sqlnode2' as 'SECONDARY' nodes.
+ 
+Login to the 'centosmn' server and start the mongo shell.
 
-
-
-
-
-> rs.initiate()
+[root@centosmn ~]# mongo
+ 
+ Initiate the replica set from the 'centosmn' server with the query below.
+ 
+ > rs.initiate()
+ /*
 {
         "info2" : "no configuration specified. Using a default configuration for the set",
         "me" : "centosmn:27017",
@@ -103,7 +171,15 @@ replication:
                 }
         }
 }
-MongoDBRep:OTHER> rs.add("sqlnode1")
+*/
+ 
+ Make sure 'ok' value is 1.
+ 
+ Now add the 'sqlnode1' and 'sqlnode2' nodes to the replica sets.
+ You will see the results below and make sure there is no error.
+ 
+ MongoDBRep:OTHER> rs.add("sqlnode1")
+ /*
 {
         "ok" : 1,
         "operationTime" : Timestamp(1559814102, 1),
@@ -115,7 +191,9 @@ MongoDBRep:OTHER> rs.add("sqlnode1")
                 }
         }
 }
+*/
 MongoDBRep:PRIMARY> rs.add("sqlnode2")
+ /*
 {
         "ok" : 1,
         "operationTime" : Timestamp(1559814113, 1),
@@ -127,12 +205,12 @@ MongoDBRep:PRIMARY> rs.add("sqlnode2")
                 }
         }
 }
-
-
-
-
-
-MongoDBRep:PRIMARY> rs.status()
+ */
+ 
+ Next, check the replica sets status with the rs query below.
+ 
+ MongoDBRep:PRIMARY> rs.status()
+ /*
 {
         "set" : "MongoDBRep",
         "date" : ISODate("2019-06-06T09:42:21.564Z"),
@@ -249,11 +327,12 @@ MongoDBRep:PRIMARY> rs.status()
                 }
         }
 }
-
-
-
-
-MongoDBRep:PRIMARY> rs.isMaster()
+*/
+ 
+ Another query to check the status is:
+ 
+ MongoDBRep:PRIMARY> rs.isMaster()
+ /*
 {
         "hosts" : [
                 "centosmn:27017",
@@ -297,11 +376,21 @@ MongoDBRep:PRIMARY> rs.isMaster()
                 }
         }
 }
+*/
+ 
+ Step 6 - Test the Replication
+ 
+ Test the data set replication from the 'PRIMARY' instance 'centosmn' to 'SECONDARY' nodes 'sqlnode1' and 'sqlnode2'.
+ In this step, we will try to write or create a new database on the 'PRIMARY' node 'cenosmn', 
+ then check if the replication is working by checking the database on 'SECONDARY' nodes 'sqlnode1' and 'sqlnode2'.
+ 
+Login to the 'centosmn' server and open mongo shell.
 
-
+[root@centosmn ~]# mongo
+ 
+ Now create a new database 'lemp' and new 'stack' collection for the database.
+ 
 --Node1------------------------------------------------------
-
-MongoDBRep:PRIMARY> cls
 
 MongoDBRep:PRIMARY> use lemp
 switched to db lemp
@@ -312,11 +401,17 @@ MongoDBRep:PRIMARY> db.stack.save(
 ...     "apps":  ["Linux", "Nginx", "MySQL", "PHP"],
 ... })
 WriteResult({ "nInserted" : 1 })
+ 
+ --Node1------------------------------------------------------ 
+ 
+Next, go to the 'SECONDARY' node 'sqlnode1' and open the mongo shell.
 
-
-
---Node2------------------------------------------------------
-
+--Node2------------------------------------------------------ 
+Enable reading from the 'SECONDARY' node with the query 'rs.slaveOk()', 
+ and then check if the 'lemp' database exists on the 'SECONDARY' nodes.
+ 
+[root@sqlnode1 ~]# mongo
+ 
 MongoDBRep:SECONDARY> rs.slaveOk()
 
 MongoDBRep:SECONDARY> show dbs
@@ -333,6 +428,9 @@ stack
 
 MongoDBRep:SECONDARY> db.stack.find()
 { "_id" : ObjectId("5cf8e08088ecc5baadfc5c74"), "desc" : "LEMP Stack", "apps" : [ "Linux", "Nginx", "MySQL", "PHP" ] }
+
+--Node2------------------------------------------------------ 
+
 
 --Node3------------------------------------------------------
 
@@ -353,5 +451,11 @@ stack
 MongoDBRep:SECONDARY> db.stack.find()
 { "_id" : ObjectId("5cf8e08088ecc5baadfc5c74"), "desc" : "LEMP Stack", "apps" : [ "Linux", "Nginx", "MySQL", "PHP" ] }
 
+--Node3------------------------------------------------------
 
-References : https://www.howtoforge.com/tutorial/mongodb-replication-on-centos-7/
+
+The database from the 'PRIMARY' node has been replicated to the 'SECONDARY' nodes, 
+  the database 'lemp' from the 'centosmn' instance replicated sucessfully to the 'sqlnode1' and 'sqlnode2' instances.
+
+A MongoDB Replica Set has been successfully created.
+
